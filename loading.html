@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTA:SA GameRaz Loading Screen</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(180deg, #87CEEB, #1E90FF);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        .slideshow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        .slide.active {
+            opacity: 1;
+        }
+        .loader {
+            position: absolute;
+            bottom: 70px;
+            width: 350px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+        .progress {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00b7ff, #ff00cc);
+            border-radius: 15px;
+            position: relative;
+            animation: pulse 3.5s infinite ease-in-out, glow 2s infinite alternate;
+        }
+        .progress::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 10%, transparent 70%);
+            opacity: 0.6;
+            animation: sparkle 4s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        @keyframes glow {
+            0% { box-shadow: 0 0 10px #00ff88, 0 0 15px #00b7ff; }
+            100% { box-shadow: 0 0 15px #ff00cc, 0 0 20px #00ff88; }
+        }
+        @keyframes sparkle {
+            0% { opacity: 0.6; transform: translateX(-100%); }
+            50% { opacity: 0.8; transform: translateX(100%); }
+            100% { opacity: 0.6; transform: translateX(-100%); }
+        }
+        .progress-text {
+            position: absolute;
+            bottom: 40px;
+            width: 440px;
+            text-align: center;
+            color: white;
+            font-size: 20px;
+            text-shadow: 2px 2px 4px #000;
+        }
+        .debug {
+            position: absolute;
+            top: 20px;
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug" id="debug">Loading GameRaz Screen</div>
+    <div class="slideshow">
+        <img src="image1.png" class="slide active" alt="Loading image 1" onerror="handleImageError(this)">
+        <img src="image2.png" class="slide" alt="Loading image 2" onerror="handleImageError(this)">
+        <img src="image3.png" class="slide" alt="Loading image 3" onerror="handleImageError(this)">
+        <img src="image4.png" class="slide" alt="Loading image 4" onerror="handleImageError(this)">
+        <img src="image5.png" class="slide" alt="Loading image 5" onerror="handleImageError(this)">
+        <img src="image6.png" class="slide" alt="Loading image 6" onerror="handleImageError(this)">
+        <img src="image7.png" class="slide" alt="Loading image 7" onerror="handleImageError(this)">
+        <img src="image8.png" class="slide" alt="Loading image 8" onerror="handleImageError(this)">
+    </div>
+    <div class="loader">
+        <div class="progress" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText">Welcome To ฿GameRaz Download Progress</div>
+
+<script>
+    const slides = document.querySelectorAll('.slide');
+    let currentSlide = 0;
+    let slideInterval;
+    let validSlides = [];
+    let musicState = false;
+    let allowStart = false;
+
+    // قفل ساده برای جلوگیری از استفاده غیرمجاز
+    const accessKey = "MySecretKey123"; // این کلید باید با client.lua هماهنگ باشد
+
+    function validateAccessKey(key) {
+        if (key === accessKey) {
+            allowStart = true;
+            initSlideshow();
+        } else {
+            document.body.innerHTML = "<h2 style='color:red'>Unauthorized access</h2>";
+        }
+    }
+
+    // راه‌اندازی اسلایدشو فقط در صورت دسترسی معتبر
+    function initSlideshow() {
+        validSlides = Array.from(slides).filter(slide => {
+            return slide.complete && slide.naturalWidth > 0;
+        });
+
+        if (validSlides.length === 0) {
+            document.getElementById('debug').innerText = 'No valid slides found!';
+            return;
+        }
+
+        slides.forEach(slide => slide.classList.remove('active'));
+        validSlides[0].classList.add('active');
+        slideInterval = setInterval(showNextSlide, 10000);
+    }
+
+    function showNextSlide() {
+        if (validSlides.length === 0 || !allowStart) return;
+
+        const currentIndex = validSlides.findIndex(slide => slide.classList.contains('active'));
+        const nextIndex = (currentIndex + 1) % validSlides.length;
+
+        validSlides[currentIndex].classList.remove('active');
+        validSlides[nextIndex].classList.add('active');
+    }
+
+    function handleImageError(img) {
+        console.error('Failed to load image:', img.src);
+        img.style.display = 'none';
+        initSlideshow();
+    }
+
+    // مدیریت موزیک توسط MTA
+    function setInitialMusicState(state) {
+        musicState = state;
+        console.log("Initial music state:", state);
+    }
+
+    function setMusicState(state) {
+        musicState = state;
+        console.log("Music toggled:", state);
+    }
+
+
+</script>
+
+</body>
+</html>
